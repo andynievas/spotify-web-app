@@ -1,16 +1,12 @@
-// console.log("HOLA");
-
 const express = require("express");
 const dotenv = require("dotenv");
 const request = require("request");
 const puppeteer = require("puppeteer");
 const cors = require("cors");
 
-// import puppeteer from 'puppeteer';
+dotenv.config();
 
 const port = 5000;
-
-dotenv.config();
 
 const spotify_client_id = process.env.SPOTIFY_CLIENT_ID;
 const spotify_client_secret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -19,15 +15,18 @@ let access_token = process.env.SPOTIFY_ACCESS_TOKEN;
 let browser = null;
 let page = null;
 
-async function initBrowser() {
+async function initBrowser(browser_port) {
   try {
-    const options = { width: 1024, height: 768 };
-    browser = await puppeteer.launch({
-      // browser: "firefox",
-      headless: false,
-      defaultViewport: null,
-      args: [`--window-size=${options.width},${options.height}`], // new option
+    // const options = { width: 1024, height: 768 };
+    // browser = await puppeteer.launch({
+    //   headless: false,
+    //   defaultViewport: null,
+    //   args: [`--window-size=${options.width},${options.height}`], // new option
+    // });
+    browser = await puppeteer.connect({
+      browserURL: `127.0.0.1:${browser_port}`,
     });
+
     const pages = await browser.pages();
     console.log("pages");
     console.log(pages);
@@ -272,5 +271,16 @@ app.get("/", (req, res) => {
 
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`);
-  initBrowser();
+  try {
+    const port_arg = process.argv.find((arg) => arg.includes("-p="));
+    const chrome_port = port_arg.split("=")[1];
+    if (chrome_port) {
+      initBrowser(chrome_port);
+    } else {
+      console.log("No browser port found");
+    }
+  } catch (error) {
+    console.log("error");
+    console.log(error);
+  }
 });
